@@ -6,11 +6,13 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { paginationDto } from './dto/pagination.dto';
 
 @ApiTags('User')
 @Controller('user')
@@ -21,9 +23,9 @@ export class UserController {
   @ApiBody({
     schema: {
       example: {
-        name: '<Abishek>',
-        email: 'example@gmail.com',
-        password: 'example123',
+        name: '',
+        email: '',
+        password: '',
       },
     },
   })
@@ -31,10 +33,12 @@ export class UserController {
   create(@Body() createUserDto: CreateUserDto) {
     return this.userService.create(createUserDto);
   }
+  @ApiQuery({ name: 'skip', required: false, type: Number, example: 0 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 5 })
   @ApiOperation({ summary: 'get all user' })
   @Get()
-  findAll() {
-    return this.userService.findAll();
+  findAll(@Query() pagination: paginationDto) {
+    return this.userService.findAll(pagination);
   }
 
   @ApiOperation({ summary: 'Find user by ID' })

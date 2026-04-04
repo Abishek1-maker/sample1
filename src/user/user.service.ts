@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-import { Injectable } from '@nestjs/common';
+import { Injectable, Query } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { paginationDto } from './dto/pagination.dto';
+import { DEFAULT_PAGE } from 'src/utils/constant';
 
 @Injectable()
 export class UserService {
@@ -15,8 +17,11 @@ export class UserService {
     return this.prisma.user.create({ data: Data });
   }
 
-  findAll() {
-    return this.prisma.user.findMany();
+  findAll(@Query() pagination: paginationDto) {
+    return this.prisma.user.findMany({
+      skip: pagination.skip,
+      take: pagination.limit ?? DEFAULT_PAGE,
+    });
   }
   async findByEmail(email: string) {
     return await this.prisma.user.findUnique({ where: { email } });
