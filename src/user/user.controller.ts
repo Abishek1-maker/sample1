@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   Controller,
   Get,
@@ -7,12 +9,21 @@ import {
   Param,
   Delete,
   Query,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { paginationDto } from './dto/pagination.dto';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth/jwt-auth.guard';
 
 @ApiTags('User')
 @Controller('user')
@@ -40,7 +51,13 @@ export class UserController {
   findAll(@Query() pagination: paginationDto) {
     return this.userService.findAll(pagination);
   }
-
+  @ApiOperation({ summary: 'profile' })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  getProfile(@Req() req: any) {
+    return this.userService.findOne(req.user.id);
+  }
   @ApiOperation({ summary: 'Find user by ID' })
   @Get(':id')
   findOne(@Param('id') id: number) {

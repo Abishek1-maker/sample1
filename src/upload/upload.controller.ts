@@ -16,7 +16,7 @@ export class UploadController {
   constructor(private uploadservice: UploadService) {}
 
   // ─── UPLOAD MULTIPLE ──────────────────────────
-  @ApiOperation({ summary: 'Upload multiple images' })
+  @ApiOperation({ summary: ' upload multiples images' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -33,14 +33,13 @@ export class UploadController {
     },
   })
   @Post(':userId')
-  @UseInterceptors(FilesInterceptor('files', 5)) // ✅ clean! no storage config!
+  @UseInterceptors(FilesInterceptor('files', 5))
   uploadFiles(
     @Param('userId') userId: number,
     @UploadedFiles() files: Express.Multer.File[],
   ) {
-    return this.uploadservice.uploadFiles(+userId, files);
+    return this.uploadservice.uploadFiles(userId, files);
   }
-
   // ─── DELETE ONE IMAGE ──────────────────────────
   @ApiOperation({ summary: 'Delete one image by imageId' })
   @Delete(':imageId')
