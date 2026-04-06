@@ -41,7 +41,13 @@ export class UserService {
   async findOne(id: number) {
     return await this.prisma.user.findUnique({ where: { id } });
   }
-
+  //------------------------store hashedRefreshtoken--------------
+  async updateRefreshToken(userId: number, hashedRefreshToken: string) {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { hashedRefreshToken },
+    });
+  }
   async update(id: number, Data: UpdateUserDto) {
     if (Data.password) {
       Data.password = await bcrypt.hash(Data.password, 10);

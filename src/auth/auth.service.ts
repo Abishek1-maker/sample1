@@ -1,14 +1,19 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { compare } from 'bcrypt';
 import { UserService } from 'src/user/user.service';
 import { Authjwtpayload } from './types/jwt-payload';
+import { ConfigType } from '@nestjs/config';
+import refreshConfig from './config/refreshConfig';
+import * as argon2 from 'argon2';
 
 @Injectable()
 export class AuthService {
   constructor(
     private userservice: UserService,
     private jwtservice: JwtService,
+    @Inject(refreshConfig.KEY)
+    private refreshConfiguration: ConfigType<typeof refreshConfig>,
   ) {}
   async validateUser(email: string, password: string) {
     const user = await this.userservice.findByEmail(email);
@@ -19,8 +24,37 @@ export class AuthService {
     return { id: user.id };
   }
   //---------------------------Generate Tokens---------------------------
-  login(userId: number) {
+  async login(userId: number) {
+    const { accessToken, refreshToken } = await this.generateTokens(userId);
+    const hashedRefreshToken = await argon2.hash(refreshToken);
+    await this.userservice.updateRefreshToken(userId, hashedRefreshToken);
+    return {
+      id: userId,
+      accessToken,
+      refreshToken,
+    };
+  }
+  //---------------------Generate BOTH Token--------------
+  async generateTokens(userId: number) {
     const payload: Authjwtpayload = { sub: userId };
-    return this.jwtservice.sign(payload);
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtservice.signAsync(payload),
+      this.jwtservice.signAsync(payload, this.refreshConfiguration),
+    ]);
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
+  //-------------------Refresh Token------------
+  async refreshToken(userId: number) {
+    const { accessToken, refreshToken } = await this.generateTokens(userId);
+    const hashedRefreshToken = await argon2.hash(refreshToken);
+    await this.userservice.updateRefreshToken(userId, hashedRefreshToken);
+    return {
+      id: userId,
+      new_accessToken: accessToken,
+      new_refreshToken: refreshToken,
+    };
   }
 }
