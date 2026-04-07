@@ -1,4 +1,9 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { compare } from 'bcrypt';
 import { UserService } from 'src/user/user.service';
@@ -23,6 +28,20 @@ export class AuthService {
       throw new UnauthorizedException('password doesnot match');
     return { id: user.id };
   }
+  //-------------------------------Validate refresh token---------------
+  async validaterefreshToken(userId: number, refreshToken: string) {
+    const user = await this.userservice.findOne(userId);
+    if (!user || !refreshToken || !user.hashedRefreshToken)
+      throw new NotFoundException('refresh token  not found');
+    const refreshTokenMatch = await argon2.verify(
+      user.hashedRefreshToken,
+      refreshToken,
+    );
+    if (!refreshTokenMatch)
+      throw new UnauthorizedException('refrehs token not matches');
+    return { id: userId };
+  }
+
   //---------------------------Generate Tokens---------------------------
   async login(userId: number) {
     const { accessToken, refreshToken } = await this.generateTokens(userId);
@@ -56,5 +75,10 @@ export class AuthService {
       new_accessToken: accessToken,
       new_refreshToken: refreshToken,
     };
+  }
+  //--------------------Sign Out------------------------
+  async signout(userId: number) {
+    await this.userservice.updateRefreshToken(userId, '');
+    return { message: 'user is signout' };
   }
 }
