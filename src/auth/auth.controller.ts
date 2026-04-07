@@ -9,6 +9,7 @@ import { LocalAuthGuard } from './guards/local-auth/local-auth.guard';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { refreshGuards } from './guards/refresh-auth/guards/refresh.guard';
+import { JwtAuthGuard } from './guards/jwt-auth/jwt-auth.guard';
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
@@ -35,5 +36,12 @@ export class AuthController {
   @Post('refresh')
   refreshToken(@Req() req: any) {
     this.authservice.refreshToken(req.user.id);
+  }
+  @ApiOperation({ summary: 'Sign out' })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Post('signout')
+  signout(@Req() req: any) {
+    this.authservice.signout(req.user.id);
   }
 }
